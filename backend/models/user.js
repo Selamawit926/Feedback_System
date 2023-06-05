@@ -15,6 +15,16 @@ const userSchema = mongoose.Schema(
       type: String,
       required: [true, 'Please enter a password'],
     },
+    active: {
+        type: Boolean
+    },
+    role:{
+      type: String
+    },
+    otp:{
+      type:String
+    }
+
   },
   {
     timestamps: true,

@@ -5,8 +5,11 @@ const feedbackSchema = mongoose.Schema(
     comment:{
         type: String
     },
-    user_id:{
-        type: mongoose.Schema.Types.ObjectId, ref: 'User'
+    userId:{
+        type: String
+    },
+    title:{
+      type: String
     }
   },
   {

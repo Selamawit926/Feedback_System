@@ -16,14 +16,23 @@ const userSchema = mongoose.Schema(
       required: [true, 'Please enter a password'],
     },
     active: {
-        type: Boolean
+          type: Boolean
     },
     role:{
-      type: String
+        type: String
     },
     otp:{
-      type:String
-    }
+      code:{
+        type: String
+      },
+      expiresAt:{
+        type: Date 
+      }
+        
+    },
+    verified:{
+        type:Boolean
+    },
 
   },
   {

@@ -114,25 +114,36 @@ const verifyOTP = asyncHandler(async (req,res) =>{
   const otp = req.params.otp;
   // Find user record by ID
   const user = await User.findById(userId);
+  if (user && user.lockUntil && user.lockUntil > Date.now()) {
+    return res.status(401).json({ message: 'Account locked. Please try again later.' });
+  }
+
+  if(!user){
+    return res.status(404).json({message:"User not found! Please try again."});
+
+  }
   // Verify OTP and check expiration
-  if (user){
-    if (user.otp.code === otp && user.otp.expiresAt > Date.now()) {
-      user.otp = null; // Clear OTP after verification
-      await user.save();
-      return res.status(201).json({
-          _id: user.id,
-          name: user.name,
-          email: user.email,
-          otp:otp,
-          token: generateToken(user._id),
-        })
-    } else {
-      return res.status(400).json({ message: 'Invalid verification link.'});
-    }
+  if(user.otp.code !== otp || user.otp.expiresAt <= Date.now()){
+    user.loginAttempts += 1;
+      if (user.loginAttempts >= 3) {
+        // Lock the account for a specific duration (e.g., 1 hour)
+        user.lockUntil = Date.now() + 60 * 5 * 1000;
+      }
+      user.save();
+      return res.status(400).json({ message: 'Invalid OTP!'});
   }
-  else{
-    return res.status(404).json({message:"User not found!"});
-  }
+
+  user.loginAttempts = 0;
+  user.lockUntil = undefined;
+  user.otp = null; // Clear OTP after verification
+  await user.save();
+  return res.status(201).json({
+      _id: user.id,
+      name: user.name,
+      email: user.email,
+      otp:otp,
+      token: generateToken(user._id),
+    });
   
 });
 
@@ -141,50 +152,68 @@ const login = asyncHandler(async (req, res) => {
   
     // Check for user email
     const user = await User.findOne({ email });
-    
+    if (user && user.lockUntil && user.lockUntil > Date.now()) {
+      return res.status(401).json({ message: 'Account locked. Please try again later.' });
+    }
 
+    if(!user){
+      return res.status(404).json({message:"User not found! Please try again."});
+
+    }
+    if ((!await bcrypt.compare(password, user.password))){
+      user.loginAttempts += 1;
+      if (user.loginAttempts >= 3) {
+        // Lock the account for a specific duration (e.g., 1 hour)
+        user.lockUntil = Date.now() + 60 * 5 * 1000;
+      }
+      user.save();
+      return res.status(400).json({message: "Invalid credentials!"});
+    }
     // Generate OTP
     const otp = otpGenerator.generate(OTP_LENGTH, { upperCase: false, specialChars: false });
-  
-    if (user && (await bcrypt.compare(password, user.password))) {
-        // Send verification email with OTP
-        user.otp = {
-                    code: otp,
-                    expiresAt: Date.now() + OTP_EXPIRY * 60 * 1000
-                  };
-        await user.save();
-        const mailOptions = {
-          from: '<no-reply@venthere49.com>',
-          to: user.email,
-          subject: 'Account verification',
-          html: `<p>Hi ${user.name},</p>
-                <p>Please enter the following code to verify your account:</p>
-                <p>${otp}</p>`,
-        };
-        transporter.sendMail(mailOptions, (error, info) => {
-          if (error) {
-            return res.status(400).json({ message: `Error sending verification email: ${error}` });
-          } else {
-            return res.status(201).json({ userId: user._id, otp:otp, message: 'Login successful. Verification email sent.' });
+    user.loginAttempts = 0;
+    user.lockUntil = undefined;
+    // Send verification email with OTP
+    user.otp = {
+                code: otp,
+                expiresAt: Date.now() + OTP_EXPIRY * 60 * 1000
+              };
+    await user.save();
+    const mailOptions = {
+      from: '<no-reply@venthere49.com>',
+      to: user.email,
+      subject: 'Account verification',
+      html: `<p>Hi ${user.name},</p>
+            <p>Please enter the following code to verify your account:</p>
+            <p>${otp}</p>`,
+    };
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        return res.status(400).json({ message: `Error sending verification email: ${error}` });
+      } else {
+        return res.status(201).json({ userId: user._id, otp:otp, message: 'Login successful. Verification email sent.' });
 
-          }
-        });
-
-    } else {
-      res.status(400)
-      throw new Error('Invalid credentials')
-    }
-  });
+      }
+    });
+    
+});
 
 const forgotPassword = asyncHandler(async (req,res)=>{
       const { email } = req.body;
-
       // Find user record by email
       const user = await User.findOne({ email });
+      if (!user){
+        return res.status(404).json({message:"User not found! Please try again."});
+      }
 
+      if (user && user.lockUntil && user.lockUntil > Date.now()) {
+        return res.status(401).json({ message: 'Account locked. Please try again later.' });
+      }
       // Generate OTP
       const otp = otpGenerator.generate(OTP_LENGTH, { upperCase: false, specialChars: false });
       if(user){
+        user.loginAttempts = 0;
+        user.lockUntil = undefined;
         user.otp = {
           code: otp,
           expiresAt: Date.now() + OTP_EXPIRY * 60 * 1000,
@@ -197,8 +226,8 @@ const forgotPassword = asyncHandler(async (req,res)=>{
           to: user.email,
           subject: 'Password Reset',
           html: `<p>Hi ${user.name},</p>
-                <p>Please use the following OTP to reset your password:</p>
-                <p>${otp}</p>`,
+                <p>Please use the following link to reset your password:</p>
+                <a href="${req.protocol}://${req.get('host')}/api/user/verify-otp/${user._id}/${otp}">Verify Account</a>`,
         };
         transporter.sendMail(mailOptions, (error, info) => {
           if (error) {
@@ -209,66 +238,77 @@ const forgotPassword = asyncHandler(async (req,res)=>{
       });
     }
     else{
-      return res.status(404).json({message:"User not found!"});
+      return res.status(404).json({message:"User not found! Please try again."});
     }
       
 })
 
 const resetPassword = asyncHandler(async (req,res)=>{
-  const { email, otp, newPassword } = req.body;
+  const userId = req.params.id;
+  const {newPassword } = req.body;
 
   // Find user record by email
-  const user = await User.findOne({ email });
+  const user = await User.findById(userId);
+  if (!user){
+    return res.status(404).json({message: "User not found!"});
+  }
+
+  if (user && user.lockUntil && user.lockUntil > Date.now()) {
+    return res.status(401).json({ message: 'Account locked. Please try again later.' });
+  }
 
   if(user){
-    if (user && user.otp.code === otp && user.otp.expiresAt > Date.now()) {
       // Update user's password
+      user.loginAttempts = 0;
+      user.lockUntil = undefined;
       const salt = await bcrypt.genSalt(10)
       const hashedPassword = await bcrypt.hash(newPassword, salt)
       user.password = hashedPassword;
-      user.otp = null; // Clear OTP after password reset
       await user.save();
   
       // Send response to client
       return res.status(200).json({ password:user.password,message: 'Password reset successful.' });
-    } else {
-      return res.status(400).json({ message: 'Invalid OTP or expired.' });
-    }
   }
   else{
-    return res.status(404).json({message:"User not found!"});
-
+    return res.status(404).json({message:"User not found!  Please try again."});
   }
   
 });
 
 const changePassword = asyncHandler(async(req,res)=>{
   const userId = req.params.id;
-  const {otp, password,newPassword } = req.body;
+  const {password,newPassword } = req.body;
 
   const user = await User.findById(userId);
-
-  if(user && !(await bcrypt.compare(password, user.password))){
-    return res.status(400).json({message:"Password update failed! Please enter password again!"})
+  if (!user){
+    return res.status(404).json({message:"User not found!"});
   }
 
-  if(user && (await bcrypt.compare(newPassword, user.password))){
-    return res.status(400).json({message:"Password update failed! Please enter password again!"})
+  if (user && user.lockUntil && user.lockUntil > Date.now()) {
+    return res.status(401).json({ message: 'Account locked. Please try again later.' });
   }
+  
+  if((user && !(await bcrypt.compare(password, user.password)) || (user && await bcrypt.compare(newPassword, user.password))) ){
+    user.loginAttempts += 1;
+      if (user.loginAttempts >= 3) {
+        // Lock the account for a specific duration (e.g., 1 hour)
+        user.lockUntil = Date.now() + 60 * 5 * 1000;
+      }
+      user.save();
+      return res.status(400).json({message: "Password update failed! Please try again!"});
+  }
+
   if (user){
-    if (user && user.otp.code === otp && user.otp.expiresAt > Date.now()) {
       // Update user's password
+      user.loginAttempts = 0;
+      user.lockUntil = undefined;
       const salt = await bcrypt.genSalt(10)
       const hashedPassword = await bcrypt.hash(newPassword, salt)
       user.password = hashedPassword;
-      user.otp = null; // Clear OTP after password reset
       await user.save();
   
       // Send response to client
       return res.status(200).json({ message: 'Password reset successful.' });
-    } else {
-      return res.status(400).json({ message: 'Invalid OTP or expired.' });
-    }
   }
   else{
     return res.status(404).json({message:"User not found!"});

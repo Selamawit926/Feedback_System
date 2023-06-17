@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const isAdmin = require("../middleware/isAdmin");
+// const sanitizeMiddleware = require("../middleware/sanitizeMiddleware");
 const {
   register,
   login,

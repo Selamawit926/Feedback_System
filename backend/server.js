@@ -4,21 +4,23 @@ const express = require('express');
 const dotenv = require('dotenv').config();
 // const { errorHandler } = require('./middleware/errorMiddleware');
 const connectDB = require('./config/db');
+// const sanitizeMiddleware = require('./middleware/sanitizeMiddleware');
 const port = 3000;
 
 connectDB();
 
 const app = express();
 
+// Apply input sanitization middleware for all routes
+// app.use(sanitizeMiddleware);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use((req, res, next) => {
     // Set the Content-Security-Policy header to prevent RCE/LCE attacks
-    res.set('Content-Security-Policy', "default-src 'self'");
+    res.setHeader('Content-Security-Policy', "default-src 'self', 'sandbox allow-same-origin' ");
     next();
   });
   
-
 app.use('/api/user', require('./routes/user'));
 app.use('/api/feedback', require('./routes/feedback'));
 

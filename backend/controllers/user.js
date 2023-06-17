@@ -4,7 +4,9 @@ const asyncHandler = require('express-async-handler')
 const User = require('../models/user')
 const otpGenerator = require('otp-generator');
 const nodemailer = require('nodemailer');
+const createDOMPurify = require('dompurify');
 const mongoose = require('mongoose');
+const he = require('he');
 
 // OTP configuration
 const OTP_LENGTH = 6;
@@ -92,10 +94,11 @@ const verifyEmail = asyncHandler(async (req,res) =>{
       user.verified = true;
       user.otp = null; // Clear OTP after verification
       await user.save();
+
       return res.status(201).json({
           _id: user.id,
-          name: user.name,
-          email: user.email,
+          name: he.encode(user.name),
+          email: he.encode(user.email),
           verified: user.verified,
           token: generateToken(user._id),
         })
@@ -139,8 +142,8 @@ const verifyOTP = asyncHandler(async (req,res) =>{
   await user.save();
   return res.status(201).json({
       _id: user.id,
-      name: user.name,
-      email: user.email,
+      name: he.encode(user.name),
+      email: he.encode(user.email),
       otp:otp,
       token: generateToken(user._id),
     });

@@ -15,7 +15,8 @@ const addFeedback = asyncHandler(async (req,res) =>{
 
     if(newFeedback){
         return res.status(201).json({
-            feedback: newFeedback
+            comment: he.encode(newFeedback.comment),
+            title: he.encode(newFeedback.title)
         })
     }
     else{
@@ -47,14 +48,16 @@ const getFeedback = asyncHandler(async (req,res)=>{
     const userId = req.params.id;
     const feedbackId = req.body.feedbackId;
 
-    const feedback = await Feedback.findById({
-        id: feedbackId,
+    const feedback = await Feedback.find({
+        _id: feedbackId,
         userId: userId
     });
 
     if(feedback){
         return res.status(200).json({
-            feedback: feedback
+            comment: he.encode(feedback.comment),
+            title: he.encode(feedback.title),
+            id: feedback._id
         })
     }
     else{
@@ -80,7 +83,8 @@ const updateFeedback = asyncHandler(async (req,res) =>{
 
     if(updatedFeedback){
         return res.status(201).json({
-            feedback: updatedFeedback
+            comment: he.encode(updatedFeedback.comment),
+            title: he.encode(updateFeedback.title)
         });
 
     }

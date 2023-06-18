@@ -7,6 +7,7 @@ const nodemailer = require('nodemailer');
 const createDOMPurify = require('dompurify');
 const mongoose = require('mongoose');
 const he = require('he');
+const { validateRegisterInput, validateLoginInput, validateEmail, validateResetPassword} = require('../utils/validation');
 
 // OTP configuration
 const OTP_LENGTH = 6;
@@ -29,6 +30,13 @@ const register = asyncHandler(async (req, res) => {
     if (!name || !email || !password) {
       res.status(400)
       throw new Error('Please enter all fields!')
+    }
+
+    const { error, value } = validateRegisterInput(req.body);
+
+    // Check validation
+    if (error) {
+      return res.status(400).json({ error: error.details[0].message });
     }
 
     // Generate OTP
@@ -152,6 +160,13 @@ const verifyOTP = asyncHandler(async (req,res) =>{
 
 const login = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
+
+    const { error, value } = validateLoginInput(req.body);
+
+    // Check validation
+    if (error) {
+      return res.status(400).json({ error: error.details[0].message });
+    }
   
     // Check for user email
     const user = await User.findOne({ email });
@@ -203,6 +218,13 @@ const login = asyncHandler(async (req, res) => {
 
 const forgotPassword = asyncHandler(async (req,res)=>{
       const { email } = req.body;
+
+      const { error, value } = validateEmail(req.body);
+
+      // Check validation
+      if (error) {
+        return res.status(400).json({ error: error.details[0].message });
+      }
       // Find user record by email
       const user = await User.findOne({ email });
       if (!user){
@@ -250,6 +272,13 @@ const resetPassword = asyncHandler(async (req,res)=>{
   const userId = req.params.id;
   const {newPassword } = req.body;
 
+  const { error, value } = validateResetPassword(req.body);
+
+    // Check validation
+    if (error) {
+      return res.status(400).json({ error: error.details[0].message });
+    }
+
   // Find user record by email
   const user = await User.findById(userId);
   if (!user){
@@ -281,6 +310,13 @@ const resetPassword = asyncHandler(async (req,res)=>{
 const changePassword = asyncHandler(async(req,res)=>{
   const userId = req.params.id;
   const {password,newPassword } = req.body;
+
+  const { error, value } = validateChangePassword(req.body);
+
+  // Check validation
+  if (error) {
+    return res.status(400).json({ error: error.details[0].message });
+  }
 
   const user = await User.findById(userId);
   if (!user){

@@ -5,7 +5,7 @@ const dotenv = require('dotenv').config();
 // const { errorHandler } = require('./middleware/errorMiddleware');
 const connectDB = require('./config/db');
 // const sanitizeMiddleware = require('./middleware/sanitizeMiddleware');
-const port = 3000;
+const port = 5000;
 
 connectDB();
 

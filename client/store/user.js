@@ -1,7 +1,10 @@
 // call from .env file
-require('dotenv').config();
-const axios = require('axios');
+
+import dotenv from 'dotenv';
+dotenv.config();
+
 const { API_URL } = process.env;
+
 const state = {
     user:{},
     users:[]

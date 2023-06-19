@@ -18,50 +18,49 @@
           <tr>
             <th class="py-2 px-4 border-b">Name</th>
             <th class="py-2 px-4 border-b">Email</th>
-            <th class="py-2 px-4 border-b">Status</th>
+           
             <th class="py-2 px-4 border-b">Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="user in filteredUsers" :key="user.id">
+          <tr v-for="user in users" :key="user.id">
             <td class="py-2 px-4 border-b">{{ user.name }}</td>
             <td class="py-2 px-4 border-b">{{ user.email }}</td>
+            
             <td class="py-2 px-4 border-b">
-              <span class="bg-green-500 text-white rounded py-1 px-2">{{ user.status }}</span>
-            </td>
-            <td class="py-2 px-4 border-b">
-              <button class="bg-blue-500 text-white px-4 py-2 rounded mr-2" @click="editUser(user.id)">Edit</button>
-              <button class="bg-red-500 text-white px-4 py-2 rounded" @click="deleteUser(user.id)">Delete</button>
+             <button class="bg-red-500 text-white px-4 py-2 rounded" @click="deleteUser(user.id)">Disable</button>
             </td>
           </tr>
-          <tr v-if="filteredUsers.length === 0">
+          <!-- <tr v-if="users.length === 0">
             <td class="py-2 px-4 border-b" colspan="4">No users found.</td>
-          </tr>
+          </tr> -->
         </tbody>
       </table>
     </div>
   </template>
   
   <script>
+    import { mapGetters, mapActions } from 'vuex';
   export default {
     data() {
       return {
-        users: [], // Array of user objects
+      
         searchQuery: '', // Search query string
       };
     },
     computed: {
-      filteredUsers() {
-        // Filter users based on the search query
-        return this.users.filter((user) =>
-          user.name.toLowerCase().includes(this.searchQuery.toLowerCase())
-        );
-      },
+        ...mapGetters(['getUsers']),
+        users() {
+        return this.getUsers;
+        }
+    },
+    mounted() {
+        // Fetch the list of users when the component is mounted
+        this.getAllUsers();
     },
     methods: {
-      fetchUsers() {
-        // TODO: Fetch users from backend and populate the users array
-      },
+        ...mapActions(['getAllUsers']),
+       
       searchUsers() {
         // Perform search based on the searchQuery
         // Here you can call the backend API to search for users
@@ -74,10 +73,7 @@
         // TODO: Handle deleting user logic
       },
     },
-    mounted() {
-      // Fetch users when the component is mounted
-      this.fetchUsers();
-    },
+    
   };
   </script>
   

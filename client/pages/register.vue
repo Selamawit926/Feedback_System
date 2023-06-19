@@ -3,7 +3,10 @@
     <div class="flex justify-center px-20">
         <div class="bg-white shadow-md m-20 rounded mb-4 w-3/4 p-16">
       <div class="max-w-3xl mx-16 mt-10">
-    <div class="text-center text-4xl text-blue-700 mb-10">
+        <div v-if=" isRegistered" class="p-4 mb-4 text-sm text-green-50 rounded-lg bg-green-600 dark:bg-gray-800 dark:text-green-400" role="alert">
+  <span class="font-medium">Registered Successfully !</span> Verification link has been sent to your email address.
+</div>
+    <div  class="text-center text-4xl text-blue-700 mb-10">
       REGISTER
     </div>
     <div class="mb-4">
@@ -38,8 +41,11 @@
         <div v-if="errorMessages.passwordConfirm" class="text-red-500">{{ errorMessages.passwordConfirm }}</div>
     </div>
     <div class="flex items-center justify-between">
-      <button @click="signUp"  class="bg-blue-700 hover:bg-blue-dark text-white font-bold py-2 px-4 rounded" type="button">
+      <button v-if=" !isLoading" @click="signUp"  class="bg-blue-700 hover:bg-blue-dark text-white font-bold py-2 px-4 rounded" type="button">
         Sign Up
+      </button>
+      <button v-else class="bg-blue-700 hover:bg-blue-dark text-white font-bold py-2 px-4 rounded" type="button">
+        ...
       </button>
       <a class="inline-block align-baseline font-bold text-sm text-blue-700 hover:text-blue-400" href="/login">
         Already have an account? Sign In.
@@ -57,15 +63,17 @@ import { mapActions } from 'vuex';
 export default {
     data(){
         return{
+            isLoading:false,
             fullName:"",
             email:"",
             password:"",
             passwordConfirm:"",
-            errorMessages:{}
+            errorMessages:{},
+            isRegistered:false,
         }
     },
     methods:{
-        ...mapActions(['register']),
+        ...mapActions('user',['register']),
         // validate input values
         validateInput(){
             this.errorMessages = {}
@@ -96,18 +104,31 @@ export default {
             }
         },
         // sign up function
-        signUp(){
+         async signUp(){
+          console.log("signing up");
+
+          this.isLoading = true;
             this.validateInput();
-            console.log(this.fullName, this.email, this.password, this.passwordConfirm);
-            if(this.errorMessages.length == 0){
-                this.register({
-                    name:this.fullName,
-                    email:this.email,
-                    password:this.password
-                }).then(()=>{
-                    this.$router.push('/login')
-                })
+            console.log(this.fullName, this.email, this.password, this.passwordConfirm,    this.isLoading);
+            console.log(Object.keys(this.errorMessages).length)
+            if(Object.keys(this.errorMessages).length == 0){
+                const res = await this.register({
+                    name: this.fullName,
+                    email: this.email,
+                    password: this.password,
+                
+                });
+                if(res){
+                    this.isRegistered = true;
+                    this.fullName = "";
+                    this.email = "";
+                    this.password = "";
+                    this.passwordConfirm = "";
+                }
+                console.log("font", res);
             }
+            this.isLoading = false;
+            this.isRegistered = false;
         },
     }
 

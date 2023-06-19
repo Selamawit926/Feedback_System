@@ -11,7 +11,7 @@
     </div>
    
     <div class="flex items-center justify-between">
-      <button class="bg-blue-700 hover:bg-blue-dark text-white font-bold py-2 px-4 rounded" type="button">
+      <button @click="submitOtp()" class="bg-blue-700 hover:bg-blue-dark text-white font-bold py-2 px-4 rounded" type="button">
       Submit
       </button>
       
@@ -22,15 +22,23 @@
 </template>
 
 <script>
+import { mapActions } from 'vuex';
 
 export default {
     data(){
         return{
             otp:"",
-            errorMessages:{}
+            errorMessages:{},
+            userId:null
         }
     },
+    created() {
+    this.userId = this.$route.query.id;
+    // You can perform any necessary operations with the user ID here
+    console.log('User ID:', this.userId);
+  },
     methods: {
+      ...mapActions('user',['verifyOtp']),
         // validate otp
         validateInput(){
             this.errorMessages = {}
@@ -41,9 +49,17 @@ export default {
         // submit otp
         submitOtp(){
             this.validateInput();
-            console.log(otp)
+            console.log(this.otp)
             if(Object.keys(this.errorMessages).length === 0){
                 // submit otp
+                this.verifyOtp({otp:this.otp,id:this.userId})
+                .then((res)=>{
+                
+                    if(res == 200 || res == 201){
+                      this.$router.push('/userList');
+                    }
+                   
+                })
             }
         }
     },

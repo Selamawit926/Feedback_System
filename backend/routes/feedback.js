@@ -11,7 +11,7 @@ const {
 } = require('../controllers/feedback');
 
 router.post('/addFeedback/:id', addFeedback);
-router.get('/getFeedbacks/:id', csrfProtection, jwtAuth.verifyToken ,getFeedbacks);
+router.get('/getFeedbacks/:id', jwtAuth.verifyToken ,getFeedbacks);
 router.get('/getFeedback/:id', getFeedback);
 router.put('/editFeedback/:id',updateFeedback);
 

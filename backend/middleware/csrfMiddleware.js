@@ -1,8 +1,8 @@
-// csrfMiddleware.js
+// // csrfMiddleware.js
 
-const csrf = require("csurf");
+// const csrf = require("csurf");
 
-// Create CSRF protection middleware
-const csrfProtection = csrf({ cookie: true });
+// // Create CSRF protection middleware
+// const csrfProtection = csrf({ cookie: true });
 
-module.exports = csrfProtection;
+// module.exports = csrfProtection;

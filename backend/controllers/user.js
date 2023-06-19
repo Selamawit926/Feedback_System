@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken')
+const jwtUtils = require('../utils/jwtUtils');
 const bcrypt = require('bcryptjs')
 const asyncHandler = require('express-async-handler')
 const User = require('../models/user')
@@ -7,6 +8,7 @@ const nodemailer = require('nodemailer');
 const createDOMPurify = require('dompurify');
 const mongoose = require('mongoose');
 const he = require('he');
+const GT = require("../middleware/generateToken");
 const { validateRegisterInput, validateLoginInput, validateEmail, validateResetPassword} = require('../utils/validation');
 
 // OTP configuration
@@ -26,7 +28,13 @@ const transporter = nodemailer.createTransport({
 
 const register = asyncHandler(async (req, res) => {
     const { name, email, password } = req.body
-  
+
+    // Validate CSRF token
+    // if (req.body._csrf !== req.csrfToken()) {
+    //   return res.status(403).send("Invalid CSRF token");
+    // }
+
+
     if (!name || !email || !password) {
       res.status(400)
       throw new Error('Please enter all fields!')
@@ -93,7 +101,7 @@ const register = asyncHandler(async (req, res) => {
 
 const verifyEmail = asyncHandler(async (req,res) =>{
   const userId = req.params.id;
-  const otp = req.params.otp;
+  const otp = req.body.otp;
   // Find user record by ID
   const user = await User.findById(userId);
   // Verify OTP and check expiration
@@ -103,13 +111,13 @@ const verifyEmail = asyncHandler(async (req,res) =>{
       user.otp = null; // Clear OTP after verification
       await user.save();
 
-      return res.status(201).json({
-          _id: user.id,
-          name: he.encode(user.name),
-          email: he.encode(user.email),
-          verified: user.verified,
-          token: generateToken(user._id),
-        })
+      return res.status(201)
+              .json({
+                _id: user.id,
+                name: he.encode(user.name),
+                email: he.encode(user.email),
+                verified: user.verified,
+              })
     } else {
       return res.status(400).json({ message: 'Invalid verification link.'});
     }
@@ -122,7 +130,7 @@ const verifyEmail = asyncHandler(async (req,res) =>{
 
 const verifyOTP = asyncHandler(async (req,res) =>{
   const userId = req.params.id;
-  const otp = req.params.otp;
+  const otp = req.body.otp;
   // Find user record by ID
   const user = await User.findById(userId);
   if (user && user.lockUntil && user.lockUntil > Date.now()) {
@@ -148,18 +156,31 @@ const verifyOTP = asyncHandler(async (req,res) =>{
   user.lockUntil = undefined;
   user.otp = null; // Clear OTP after verification
   await user.save();
+
+  // Generate access token
+  const accessToken = jwtUtils.generateToken({ userId: user._id });
+  // Generate refresh token
+  const refreshToken = jwtUtils.generateRefreshToken({ userId: user._id });
+  // Store the JWT in the session cookie
+  req.session.accessToken = accessToken;
+  req.session.refreshToken = refreshToken;
+  
   return res.status(201).json({
       _id: user.id,
       name: he.encode(user.name),
       email: he.encode(user.email),
-      otp:otp,
-      token: generateToken(user._id),
+      token: accessToken,
+      refreshToken : refreshToken //Has to be encrypted
     });
   
 });
 
 const login = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
+    // Validate CSRF token
+    // if (req.body._csrf !== req.csrfToken()) {
+    //   return res.status(403).send("Invalid CSRF token");
+    // }
 
     const { error, value } = validateLoginInput(req.body);
 
@@ -218,7 +239,10 @@ const login = asyncHandler(async (req, res) => {
 
 const forgotPassword = asyncHandler(async (req,res)=>{
       const { email } = req.body;
-
+      // Validate CSRF token
+      // if (req.body._csrf !== req.csrfToken()) {
+      //   return res.status(403).send("Invalid CSRF token");
+      // }
       const { error, value } = validateEmail(req.body);
 
       // Check validation
@@ -258,7 +282,7 @@ const forgotPassword = asyncHandler(async (req,res)=>{
           if (error) {
             return res.status(400).json({ message: `Error sending verification email: ${error}` });
           } else {
-            return res.status(201).json({ userId: user._id, otp:otp, message: 'Verification email sent.' });
+            return res.status(201).json({ userId: user._id, message: 'Verification email sent.' });
         };
       });
     }
@@ -310,7 +334,10 @@ const resetPassword = asyncHandler(async (req,res)=>{
 const changePassword = asyncHandler(async(req,res)=>{
   const userId = req.params.id;
   const {password,newPassword } = req.body;
-
+  // Validate CSRF token
+  // if (req.body._csrf !== req.csrfToken()) {
+  //   return res.status(403).send("Invalid CSRF token");
+  // }
   const { error, value } = validateChangePassword(req.body);
 
   // Check validation
@@ -355,6 +382,13 @@ const changePassword = asyncHandler(async(req,res)=>{
   
 });
 
+const logout = asyncHandler(async (req,res)=>{
+  // Clear the session and remove the access token
+  req.session.destroy();
+  res.clearCookie('connect.sid');
+  res.status(200).json({ message: 'Logout successful' });
+  console.log(req.session)
+})
 
 const getUsers = asyncHandler(async (req,res)=>{
 
@@ -395,15 +429,6 @@ const changeStatus = asyncHandler(async (req,res)=>{
 });
 
 
-  // Generate JWT
-const generateToken = (id) => {
-        return jwt.sign({ id }, process.env.JWT_SECRET, {
-            expiresIn: '30d',
-        });
-    };
-
-
-
 module.exports = {
     register,
     login,
@@ -413,6 +438,7 @@ module.exports = {
     verifyOTP,
     forgotPassword,
     changePassword,
-    resetPassword
+    resetPassword,
+    logout
     }
 

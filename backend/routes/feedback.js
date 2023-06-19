@@ -1,5 +1,8 @@
 const express = require('express');
 const router = express.Router();
+const jwtAuth = require('../middleware/checkAuth');
+const csrfProtection = require("../middleware/csrfMiddleware");
+
 const {
   addFeedback,
   getFeedbacks,
@@ -8,7 +11,7 @@ const {
 } = require('../controllers/feedback');
 
 router.post('/addFeedback/:id', addFeedback);
-router.get('/getFeedbacks/:id', getFeedbacks);
+router.get('/getFeedbacks/:id', csrfProtection, jwtAuth.verifyToken ,getFeedbacks);
 router.get('/getFeedback/:id', getFeedback);
 router.put('/editFeedback/:id',updateFeedback);
 

@@ -5,11 +5,41 @@ const dotenv = require('dotenv').config();
 // const { errorHandler } = require('./middleware/errorMiddleware');
 const connectDB = require('./config/db');
 // const sanitizeMiddleware = require('./middleware/sanitizeMiddleware');
+// Import the CSRF middleware
+const csrfProtection = require("./middleware/csrfMiddleware");
 const port = 5000;
+const app = express();
+
+const session = require('express-session');
+
+const cors = require("cors");
+
+const corsOptions ={
+   origin:'*', 
+   credentials:true,            //access-control-allow-credentials:true
+   optionSuccessStatus:200,
+}
+
+app.use(cors(corsOptions));
+
+// Set up session middleware
+app.use(
+  session({
+    secret: 'secret-key',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'strict',
+      maxAge: 3600000, // Session expiration time (1 hour)
+    },
+  })
+);
+// app.use(sessionConfig);
 
 connectDB();
 
-const app = express();
 
 // Apply input sanitization middleware for all routes
 // app.use(sanitizeMiddleware);
@@ -20,7 +50,8 @@ app.use((req, res, next) => {
     res.setHeader('Content-Security-Policy', "default-src 'self', 'sandbox allow-same-origin' ");
     next();
   });
-  
+// Apply CSRF protection middleware to relevant routes
+app.use(csrfProtection);
 app.use('/api/user', require('./routes/user'));
 app.use('/api/feedback', require('./routes/feedback'));
 

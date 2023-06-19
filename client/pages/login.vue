@@ -21,8 +21,11 @@
             <div v-if="errorMessages.password" class="text-red-500">{{ errorMessages.password }}</div>
           </div>
           <div class="flex items-center justify-between">
-            <button @click="signIn" class="bg-blue-700 hover:bg-blue-dark text-white font-bold py-2 px-4 rounded" type="button">
+            <button v-if="!isLoading" @click="signIn" class="bg-blue-700 hover:bg-blue-dark text-white font-bold py-2 px-4 rounded" type="button">
               Sign In
+            </button>
+            <button v-else  class="bg-blue-700 hover:bg-blue-dark text-white font-bold py-2 px-4 rounded" type="button">
+              ...
             </button>
             <a class="inline-block align-baseline font-bold text-sm text-blue-700 hover:text-blue-400" href="#">
               Forgot Password?
@@ -41,11 +44,12 @@ export default{
         return{
             email:"",
             password:"",
-            errorMessages:{}
+            errorMessages:{},
+            isLoading:false
         }
     },
    methods:{
-    ...mapActions(['login']),
+    ...mapActions('user',['login']),
     // input validation
     validateInput(){
         this.errorMessages = {}
@@ -68,16 +72,21 @@ export default{
 
     },
     // sign in function
-    signIn(){
+     signIn(){
+      console.log("sign in")
+      this.isLoading = true;
         this.validateInput()
-        // if(this.errorMessages.length == 0){
-        //     this.login({email:this.email, password:this.password})
-        //         .then((response)=>{
-        //             if(response.status == 200){
-        //                 this.$router.push({name:'otpPage'})
-        //             }
-        //     })
-        // }
+        if(Object.keys(this.errorMessages).length == 0){
+          console.log("sign in2" ,{email:this.email, password:this.password})
+            this.login({email:this.email, password:this.password})
+                .then((response)=>{
+                  console.log("login res",response)
+                    if(response.status == 200 || response.status == 201){
+                      this.$router.push({ name: 'otpPage', query: { id: response.data.userId } });
+                    }
+            })
+        }
+        this.isLoading = false;
 
     }
 

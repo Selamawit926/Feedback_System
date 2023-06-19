@@ -2,7 +2,11 @@
     <!-- component -->
     <div class="flex justify-center px-20">
       <div class="bg-white shadow-md m-20 rounded mb-4 w-3/4 p-16">
+
         <div class="max-w-3xl mx-16 mt-10">
+          <div  v-if="errorMessage" class="p-4 mb-4 text-sm text-red-50 rounded-lg bg-red-600 dark:bg-gray-800 dark:text-green-400" role="alert">
+          <span class="font-medium">{{ errorMessage }}</span> 
+        </div>
           <div class="text-center text-4xl text-blue-700 mb-10">
             LOGIN
           </div>
@@ -45,7 +49,8 @@ export default{
             email:"",
             password:"",
             errorMessages:{},
-            isLoading:false
+            isLoading:false,
+            errorMessage: null
         }
     },
    methods:{
@@ -72,17 +77,20 @@ export default{
 
     },
     // sign in function
-     signIn(){
-      console.log("sign in")
-      this.isLoading = true;
+     async signIn(){
+     
+       this.isLoading = true;
         this.validateInput()
         if(Object.keys(this.errorMessages).length == 0){
-          console.log("sign in2" ,{email:this.email, password:this.password})
-            this.login({email:this.email, password:this.password})
+      
+           await this.login({email:this.email, password:this.password})
                 .then((response)=>{
-                  console.log("login res",response)
+                 
                     if(response.status == 200 || response.status == 201){
                       this.$router.push({ name: 'otpPage', query: { id: response.data.userId } });
+                    }
+                    if(response.status == 400 || response.status == 401){
+                      this.errorMessage = response.data.message;
                     }
             })
         }

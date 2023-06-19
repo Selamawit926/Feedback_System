@@ -7,7 +7,7 @@ const connectDB = require('./config/db');
 // const sanitizeMiddleware = require('./middleware/sanitizeMiddleware');
 // Import the CSRF middleware
 const csrfProtection = require("./middleware/csrfMiddleware");
-const port = 3000;
+const port = 5000;
 const app = express();
 
 const session = require('express-session');

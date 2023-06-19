@@ -1,6 +1,7 @@
 const Feedback = require('../models/feedback');
 const asyncHandler = require('express-async-handler')
 const mongoose = require('mongoose');
+const he = require('he');
 
 const addFeedback = asyncHandler(async (req,res) =>{
     const comment = req.body.comment;

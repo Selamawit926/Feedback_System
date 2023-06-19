@@ -122,7 +122,7 @@ const verifyEmail = asyncHandler(async (req,res) =>{
 
 const verifyOTP = asyncHandler(async (req,res) =>{
   const userId = req.params.id;
-  const otp = req.params.otp;
+  const otp = req.body.otp;
   // Find user record by ID
   const user = await User.findById(userId);
   if (user && user.lockUntil && user.lockUntil > Date.now()) {

@@ -17,7 +17,7 @@ const {
 router.post('/', register);
 router.post('/login', login);
 router.get('/verify-email/:id/:otp',verifyEmail);
-router.get('/verify-otp/:id/:otp',verifyOTP);
+router.post('/verify-otp/:id',verifyOTP);
 router.post('/forgotPassword',forgotPassword);
 router.put('/changePassword/:id',changePassword);
 router.put('/resetPassword/:id',resetPassword);

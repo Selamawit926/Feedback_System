@@ -11,6 +11,14 @@ connectDB();
 
 const app = express();
 
+const cors=require("cors");
+const corsOptions ={
+   origin:'*', 
+   credentials:true,            //access-control-allow-credentials:true
+   optionSuccessStatus:200,
+}
+
+app.use(cors(corsOptions))
 // Apply input sanitization middleware for all routes
 // app.use(sanitizeMiddleware);
 app.use(express.json());

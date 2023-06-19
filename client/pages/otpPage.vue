@@ -55,7 +55,8 @@ export default {
                 .then((res)=>{
                 
                     if(res == 200 || res == 201){
-                      this.$router.push('/feedback');
+                      this.$router.push({ name: 'feedback', query: { id: this.userId } });
+
                     }
                    
                 })

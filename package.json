@@ -1,9 +1,6 @@
 {
   "dependencies": {
-    "dompurify": "^3.0.3",
     "he": "^1.2.0",
-    "joi": "^17.9.2",
-    "nodemailer": "^6.9.3",
-    "otp-generator": "^4.0.1"
+    "joi": "^17.9.2"
   }
 }

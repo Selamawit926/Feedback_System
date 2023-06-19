@@ -11,6 +11,17 @@ const port = 5000;
 const app = express();
 
 const session = require('express-session');
+
+const cors = require("cors");
+
+const corsOptions ={
+   origin:'*', 
+   credentials:true,            //access-control-allow-credentials:true
+   optionSuccessStatus:200,
+}
+
+app.use(cors(corsOptions));
+
 // Set up session middleware
 app.use(
   session({

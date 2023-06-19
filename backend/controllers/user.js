@@ -282,7 +282,7 @@ const forgotPassword = asyncHandler(async (req,res)=>{
           if (error) {
             return res.status(400).json({ message: `Error sending verification email: ${error}` });
           } else {
-            return res.status(201).json({ userId: user._id, otp:otp, message: 'Verification email sent.' });
+            return res.status(201).json({ userId: user._id, message: 'Verification email sent.' });
         };
       });
     }

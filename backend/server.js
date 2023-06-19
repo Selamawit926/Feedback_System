@@ -40,7 +40,6 @@ app.use(
 
 connectDB();
 
-
 // Apply input sanitization middleware for all routes
 // app.use(sanitizeMiddleware);
 app.use(express.json());

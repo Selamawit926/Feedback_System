@@ -40,7 +40,6 @@ app.use(
 
 connectDB();
 
-
 // Apply input sanitization middleware for all routes
 // app.use(sanitizeMiddleware);
 app.use(express.json());
@@ -51,7 +50,7 @@ app.use((req, res, next) => {
     next();
   });
 // Apply CSRF protection middleware to relevant routes
-app.use(csrfProtection);
+// app.use(csrfProtection);
 app.use('/api/user', require('./routes/user'));
 app.use('/api/feedback', require('./routes/feedback'));
 

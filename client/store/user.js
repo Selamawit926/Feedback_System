@@ -50,7 +50,7 @@ const actions = {
     async verifyOtp({commit},otpInfo){
         try {
          
-            const res = await axios.post(`http://localhost:5000/api/user/verify-otp/${otpInfo.id}`,otpInfo.otp);
+            const res = await axios.post(`http://localhost:5000/api/user/verify-otp/${otpInfo.id}`,otpInfo);
             return res.status;
 
         } catch (error) {

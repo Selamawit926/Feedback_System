@@ -105,12 +105,11 @@ export default {
         },
         // sign up function
          async signUp(){
-          console.log("signing up");
+        
 
           this.isLoading = true;
             this.validateInput();
-            console.log(this.fullName, this.email, this.password, this.passwordConfirm,    this.isLoading);
-            console.log(Object.keys(this.errorMessages).length)
+            
             if(Object.keys(this.errorMessages).length == 0){
                 const res = await this.register({
                     name: this.fullName,
@@ -125,7 +124,7 @@ export default {
                     this.password = "";
                     this.passwordConfirm = "";
                 }
-                console.log("font", res);
+              
             }
             this.isLoading = false;
             this.isRegistered = false;

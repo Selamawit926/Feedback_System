@@ -23,7 +23,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="user in users" :key="user.id">
+          <tr v-for="user in usersList" :key="user.id">
             <td class="py-2 px-4 border-b">{{ user.name }}</td>
             <td class="py-2 px-4 border-b">{{ user.email }}</td>
             
@@ -44,37 +44,30 @@
   export default {
     data() {
       return {
-      
+        usersList: [],
         searchQuery: '', // Search query string
       };
     },
     computed: {
-        ...mapGetters(['getUsers']),
+        ...mapGetters('user', ['getUsers']),
         users() {
-        return this.getUsers;
+          
+            return this.getUsers;
         }
+        
     },
-    mounted() {
-        // Fetch the list of users when the component is mounted
-        this.getAllUsers();
+    async created() {
+        this.usersList =await this.getAllUsers();
     },
     methods: {
-        ...mapActions(['getAllUsers']),
-       
-      searchUsers() {
-        // Perform search based on the searchQuery
-        // Here you can call the backend API to search for users
-        // and update the users array accordingly
-      },
-      editUser(userId) {
-        // TODO: Handle editing user logic
-      },
-      deleteUser(userId) {
-        // TODO: Handle deleting user logic
-      },
+        ...mapActions('user', ['getAllUsers']),
+        searchUsers() {
+            this.getAllUsers();
+        }
+
     },
     
-  };
+  }
   </script>
   
   <style>

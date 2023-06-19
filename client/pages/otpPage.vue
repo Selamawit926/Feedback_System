@@ -34,8 +34,7 @@ export default {
     },
     created() {
     this.userId = this.$route.query.id;
-    // You can perform any necessary operations with the user ID here
-    console.log('User ID:', this.userId);
+   
   },
     methods: {
       ...mapActions('user',['verifyOtp']),
@@ -56,7 +55,7 @@ export default {
                 .then((res)=>{
                 
                     if(res == 200 || res == 201){
-                      this.$router.push('/userList');
+                      this.$router.push('/feedback');
                     }
                    
                 })

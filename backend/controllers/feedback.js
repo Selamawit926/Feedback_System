@@ -1,6 +1,8 @@
 const Feedback = require('../models/feedback');
 const asyncHandler = require('express-async-handler')
 const mongoose = require('mongoose');
+const multer = require('multer');
+const pdfParser = require('pdf-parse');
 
 const addFeedback = asyncHandler(async (req,res) =>{
     const comment = req.body.comment;
@@ -94,4 +96,38 @@ const updateFeedback = asyncHandler(async (req,res) =>{
     }
 });
 
-module.exports = {addFeedback,getFeedbacks,updateFeedback,getFeedback};
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      // Specify the directory where you want to store the uploaded files
+      cb(null, 'uploads/');
+    },
+    filename: (req, file, cb) => {
+      // Generate a unique filename for the uploaded file
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+      const originalExtension = file.originalname.split('.').pop();
+      cb(null, `${file.fieldname}-${uniqueSuffix}.${originalExtension}`);
+    },
+  });
+  
+  // Create the Multer upload middleware
+  const upload = (req, res, next)=>{
+    multer({ storage });
+    res.status(200).send('Success');
+  }
+  
+  // File validation middleware
+  const checkPdf = (req, res, next) => {
+    const { path } = req.file;
+    pdfParser(path)
+      .then(() => {
+        // File is a valid PDF
+        next();
+      })
+      .catch((err) => {
+        // File is not a valid PDF
+        res.status(401).send('Invalid File');
+      });
+  }
+
+
+module.exports = {addFeedback,getFeedbacks,updateFeedback, getFeedback, checkPdf, upload};

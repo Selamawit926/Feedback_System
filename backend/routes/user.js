@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const isAdmin = require("../middleware/isAdmin");
+const multer = require('multer');
+const pdfParser = require('pdf-parse');
 // const csrfProtection = require("../middleware/csrfMiddleware");
 // const sanitizeMiddleware = require("../middleware/sanitizeMiddleware");
 const {
@@ -19,7 +21,7 @@ const {
 router.post('/',register);
 router.post('/login',login);
 router.get('/verify-email/:id', verifyEmail);
-router.get('/verify-otp/:id',verifyOTP);
+router.post('/verify-otp/:id',verifyOTP);
 router.post('/forgotPassword',forgotPassword);
 router.put('/changePassword/:id',changePassword);
 router.put('/resetPassword/:id',resetPassword);

@@ -9,7 +9,7 @@ const createDOMPurify = require('dompurify');
 const mongoose = require('mongoose');
 const he = require('he');
 const GT = require("../middleware/generateToken");
-const { validateRegisterInput, validateLoginInput, validateEmail, validateResetPassword} = require('../utils/validation');
+const { validateRegisterInput, validateLoginInput, validateEmail, validateResetPassword, validateChangePassword} = require('../utils/validation');
 
 // OTP configuration
 const OTP_LENGTH = 6;
@@ -141,8 +141,10 @@ const verifyOTP = asyncHandler(async (req,res) =>{
     return res.status(404).json({message:"User not found! Please try again."});
 
   }
+  console.log(user.otp.code , "code")
+  console.log(otp , "otp")
   // Verify OTP and check expiration
-  if(user.otp.code !== otp || user.otp.expiresAt <= Date.now()){
+  if(user.otp.code !== otp || user.otp.expiresAt <=  Date.now()){
     user.loginAttempts += 1;
       if (user.loginAttempts >= 3) {
         // Lock the account for a specific duration (e.g., 1 hour)
@@ -230,7 +232,7 @@ const login = asyncHandler(async (req, res) => {
       if (error) {
         return res.status(400).json({ message: `Error sending verification email: ${error}` });
       } else {
-        return res.status(201).json({ userId: user._id, otp:otp, message: 'Login successful. Verification email sent.' });
+        return res.status(201).json({ userId: user._id, message: 'Login successful. Verification email sent.' });
 
       }
     });
@@ -276,7 +278,7 @@ const forgotPassword = asyncHandler(async (req,res)=>{
           subject: 'Password Reset',
           html: `<p>Hi ${user.name},</p>
                 <p>Please use the following link to reset your password:</p>
-                <a href="${req.protocol}://${req.get('host')}/api/user/verify-otp/${user._id}/${otp}">Verify Account</a>`,
+                <a href="http://localhost:3000/otpPage?id=${user._id}&otp=${otp}">Verify Account</a>`,
         };
         transporter.sendMail(mailOptions, (error, info) => {
           if (error) {
